@@ -1,0 +1,4 @@
+.bundle
+.env
+releases
+thin.yml
