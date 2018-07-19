@@ -37,7 +37,7 @@ class TelegramController < AppController
       halt 401
     end
 
-    if @body_hash.has_key?('update_id') == false
+    if not @body_hash.has_key?('update_id')
       halt 400
     end
 
