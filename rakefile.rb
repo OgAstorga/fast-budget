@@ -6,6 +6,7 @@ Dotenv.load('.env', '.env.base')
 
 ENV['RACK_ENV'] = 'test'
 
+# import spec files
 Rake::TestTask.new do |t|
   t.pattern = 'app/controllers/*_spec.rb'
 end
