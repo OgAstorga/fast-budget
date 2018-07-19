@@ -2,6 +2,7 @@ require 'minitest/autorun'
 require 'rack/test'
 
 require_relative './telegram.rb'
+require_relative '../models/user.rb'
 
 class TelegramControllerSpec < MiniTest::Test
   include Rack::Test::Methods
@@ -29,6 +30,8 @@ class TelegramControllerSpec < MiniTest::Test
     body = '{"update_id":1,
     "message":{"message_id":1,"from":{"id":1,"is_bot":false,"first_name":"Milan","last_name":"Kundera","username":"mkundera","language_code":"en-us"},"chat":{"id":1,"first_name":"Milan","last_name":"Kundera","username":"mkundera","type":"private"},"date":1531867796,"text":"/start","entities":[{"offset":0,"length":6,"type":"bot_command"}]}}'
     post "/webhook/#{ENV['TELEGRAM_SECRET']}", body
+
+    assert User.where(_id: 1).exists?
 
     assert_equal last_response.status, 200
   end
