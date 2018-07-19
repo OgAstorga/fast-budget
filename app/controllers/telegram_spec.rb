@@ -69,8 +69,21 @@ class TelegramControllerSpec < MiniTest::Test
       'text' => '/start',
     })
 
-    assert User.where(_id: 1).exists?
-
     assert_equal last_response.status, 200
+  end
+
+  def test_create_user
+    uid = rand(1000)
+    post "/webhook/#{ENV['TELEGRAM_SECRET']}", update_generator({
+      'id' => uid,
+      'username' => 'mkundera',
+      'first_name' => 'Milan',
+      'last_name' => 'Kundera',
+    }, {
+      'id' => 1,
+      'text' => '/start',
+    })
+
+    assert User.where(_id: uid).exists?
   end
 end
