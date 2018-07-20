@@ -86,4 +86,24 @@ class TelegramControllerSpec < MiniTest::Test
 
     assert User.where(_id: uid).exists?
   end
+
+  def test_log_spending
+    mid = rand(1000)
+    post "/webhook/#{ENV['TELEGRAM_SECRET']}", update_generator({
+      'id' => 1,
+      'username' => 'mkundera',
+      'first_name' => 'Milan',
+      'last_name' => 'Kundera',
+    }, {
+      'id' => mid,
+      'text' => '147 machine learning',
+    })
+
+    transaction = Transaction.find_by(message_id: mid)
+
+    assert transaction != nil
+    assert_equal 147.0, transaction[:amount]
+    assert_equal 'machine learning', transaction[:description]
+    assert_equal 1, transaction[:user_id]
+  end
 end
