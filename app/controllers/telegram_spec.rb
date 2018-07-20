@@ -18,7 +18,7 @@ def update_generator(user, message)
         'language_code' => 'en-us',
       },
       'chat' => {
-        'id' => user['id'],
+        'id' => message['chat_id'],
         'first_name' => user['first_name'],
         'last_name' => user['last_name'],
         'username' => user['username'],
@@ -66,6 +66,7 @@ class TelegramControllerSpec < MiniTest::Test
       'last_name' => 'Kundera',
     }, {
       'id' => 1,
+      'chat_id' => 1,
       'text' => '/start',
     })
 
@@ -81,6 +82,7 @@ class TelegramControllerSpec < MiniTest::Test
       'last_name' => 'Kundera',
     }, {
       'id' => 1,
+      'chat_id' => 1,
       'text' => '/start',
     })
 
@@ -89,6 +91,7 @@ class TelegramControllerSpec < MiniTest::Test
 
   def test_log_spending
     mid = rand(1000)
+    cid = rand(1000000000000000)
     post "/webhook/#{ENV['TELEGRAM_SECRET']}", update_generator({
       'id' => 1,
       'username' => 'mkundera',
@@ -96,12 +99,16 @@ class TelegramControllerSpec < MiniTest::Test
       'last_name' => 'Kundera',
     }, {
       'id' => mid,
+      'chat_id' => cid,
       'text' => '147 machine learning',
     })
 
-    transaction = Transaction.find_by(message_id: mid)
+    transaction = Transaction.find_by(chat_id: cid, message_id: mid)
 
     assert transaction != nil
+    assert_equal 1, transaction[:user_id]
+    assert_equal mid, transaction[:message_id]
+    assert_equal cid, transaction[:chat_id]
     assert_equal 147.0, transaction[:amount]
     assert_equal 'machine learning', transaction[:description]
     assert_equal 1, transaction[:user_id]
