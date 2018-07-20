@@ -1,5 +1,5 @@
 require_relative './app'
-require_relative '../models/user.rb'
+require_relative '../models/main.rb'
 
 class TelegramController < AppController
   before do

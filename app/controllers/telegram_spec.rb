@@ -2,7 +2,7 @@ require 'minitest/autorun'
 require 'rack/test'
 
 require_relative './telegram.rb'
-require_relative '../models/user.rb'
+require_relative '../models/main.rb'
 
 def update_generator(user, message)
   update = {
