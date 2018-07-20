@@ -46,16 +46,16 @@ class TelegramControllerSpec < MiniTest::Test
 
   def test_webhook_auth
     post '/webhook/r8O3JnU3O91uegYj', '{"update_id": 1}'
-    assert_equal last_response.status, 401
+    assert_equal 401, last_response.status
 
     post "/webhook/#{ENV['TELEGRAM_SECRET']}", '{"update_id": 1}'
-    assert_equal last_response.status, 200
+    assert_equal 200, last_response.status
   end
 
   def test_chat_malformed
     post "/webhook/#{ENV['TELEGRAM_SECRET']}", '{"updated_id": 1'
 
-    assert_equal last_response.status, 400
+    assert_equal 400, last_response.status
   end
 
   def test_chat_init
@@ -69,7 +69,7 @@ class TelegramControllerSpec < MiniTest::Test
       'text' => '/start',
     })
 
-    assert_equal last_response.status, 200
+    assert_equal 200, last_response.status
   end
 
   def test_create_user
