@@ -4,10 +4,10 @@ require 'rack/test'
 require_relative './telegram.rb'
 require_relative '../models/main.rb'
 
-def update_generator(user, message)
+def update_generator(user, message, action = 'message')
   update = {
     'update_id' => 1,
-    'message' => {
+    action => {
       'message_id' => message['id'],
       'from' => {
         'id' => user['id'],
@@ -111,6 +111,57 @@ class TelegramControllerSpec < MiniTest::Test
     assert_equal cid, transaction[:chat_id]
     assert_equal 147.0, transaction[:amount]
     assert_equal 'machine learning', transaction[:description]
-    assert_equal 1, transaction[:user_id]
+  end
+
+  def test_edit_transaction
+    mid = rand(1000)
+    cid = rand(1000)
+
+    post "/webhook/#{ENV['TELEGRAM_SECRET']}", update_generator({
+      'id' => 1,
+      'username' => 'mkundera',
+      'first_name' => 'Milan',
+      'last_name' => 'Kundera',
+    }, {
+      'id' => mid,
+      'chat_id' => cid,
+      'text' => '147 machine learning',
+    })
+
+    transaction = Transaction.find_by(chat_id: cid, message_id: mid)
+
+    assert_equal 147.0, transaction[:amount]
+    assert_equal 'machine learning', transaction[:description]
+
+
+    post "/webhook/#{ENV['TELEGRAM_SECRET']}", update_generator({
+      'id' => 1,
+      'username' => 'mkundera',
+      'first_name' => 'Milan',
+      'last_name' => 'Kundera',
+    }, {
+      'id' => mid,
+      'chat_id' => cid,
+      'text' => '13.5 cookies',
+    }, 'edited_message')
+
+    transaction = Transaction.find_by(chat_id: cid, message_id: mid)
+
+    assert_equal 13.5, transaction[:amount]
+    assert_equal 'cookies', transaction[:description]
+
+
+    post "/webhook/#{ENV['TELEGRAM_SECRET']}", update_generator({
+      'id' => 1,
+      'username' => 'mkundera',
+      'first_name' => 'Milan',
+      'last_name' => 'Kundera',
+    }, {
+      'id' => mid,
+      'chat_id' => cid,
+      'text' => 'no transaction',
+    }, 'edited_message')
+
+    assert Transaction.where(chat_id: cid, message_id: mid).exists? == false
   end
 end

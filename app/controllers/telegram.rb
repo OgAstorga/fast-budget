@@ -17,7 +17,7 @@ class TelegramController < AppController
     end
   end
 
-  def self.handle_message(message)
+  def self.handle_message(message, edit=false)
     from = message['from']
 
     if not User.where(_id: from['id']).exists?
@@ -47,14 +47,33 @@ class TelegramController < AppController
       end
     end
 
-    Transaction.create(
-      message_id: message['message_id'],
-      message: message['text'],
-      timestamp: Time.now,
-      amount: amount,
-      description: description.join(' '),
-      user: user
-    )
+    if edit
+      transaction = Transaction.find_by(
+        chat_id: message['chat']['id'],
+        message_id: message['message_id']
+      )
+
+      if amount == nil
+        transaction.delete
+      else
+        transaction.update_attributes(
+          message: message['text'],
+          timestamp: Time.at(message['date']),
+          amount: amount,
+          description: description.join(' '),
+        )
+      end
+    elsif amount != nil
+      Transaction.create(
+        chat_id: message['chat']['id'],
+        message_id: message['message_id'],
+        message: message['text'],
+        timestamp: Time.at(message['date']),
+        amount: amount,
+        description: description.join(' '),
+        user: user
+      )
+    end
   end
 
   post '/webhook/:secret' do
@@ -68,6 +87,8 @@ class TelegramController < AppController
 
     if @body_hash.has_key?('message')
       self.class.handle_message @body_hash['message']
+    elsif @body_hash.has_key?('edited_message')
+      self.class.handle_message @body_hash['edited_message'], true
     end
 
     [200, 'grant']
