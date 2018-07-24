@@ -164,4 +164,27 @@ class TelegramControllerSpec < MiniTest::Test
 
     assert Transaction.where(chat_id: cid, message_id: mid).exists? == false
   end
+
+  def test_transaction_category
+    mid = rand(1000)
+    cid = rand(1000)
+
+    post "/webhook/#{ENV['TELEGRAM_SECRET']}", update_generator({
+      'id' => 1,
+      'username' => 'mkundera',
+      'first_name' => 'Milan',
+      'last_name' => 'Kundera',
+    }, {
+      'id' => mid,
+      'chat_id' => cid,
+      'text' => '147 machine learning #education',
+    })
+
+    category = Category.find_by(slug: 'education')
+    transactions = category.transactions
+
+    assert_equal 1, transactions.length
+    assert_equal mid, transactions[0].message_id
+    assert_equal cid, transactions[0].chat_id
+  end
 end
