@@ -12,6 +12,7 @@ class Transaction
   include Mongoid::Timestamps
 
   belongs_to :user
+  has_and_belongs_to_many :categories
 
   index({ chat_id: 1, message_id: 1 }, { unique: true })
 end
