@@ -44,6 +44,12 @@ class TelegramControllerSpec < MiniTest::Test
     TelegramController
   end
 
+  def setup
+    User.where(:_id.exists => 1).delete
+    Category.where(:_id.exists => 1).delete
+    Transaction.where(:_id.exists => 1).delete
+  end
+
   def test_webhook_auth
     post '/webhook/r8O3JnU3O91uegYj', '{"update_id": 1}'
     assert_equal 401, last_response.status
