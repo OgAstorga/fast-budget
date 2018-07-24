@@ -47,6 +47,12 @@ class TelegramController < AppController
       end
     end
 
+    # Create categories
+    categories = categories.map do |category|
+      slug = category[1, category.length-1].downcase
+      Category.find_or_create_by(slug: slug)
+    end
+
     if edit
       transaction = Transaction.find_by(
         chat_id: message['chat']['id'],
@@ -61,6 +67,7 @@ class TelegramController < AppController
           timestamp: Time.at(message['date']),
           amount: amount,
           description: description.join(' '),
+          categories: categories,
         )
       end
     elsif amount != nil
@@ -71,7 +78,8 @@ class TelegramController < AppController
         timestamp: Time.at(message['date']),
         amount: amount,
         description: description.join(' '),
-        user: user
+        user: user,
+        categories: categories,
       )
     end
   end
