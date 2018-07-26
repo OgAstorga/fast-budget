@@ -3,6 +3,7 @@ require 'rack/test'
 
 require_relative './telegram.rb'
 require_relative '../models/main.rb'
+require_relative '../helpers/mock-client'
 
 def update_generator(user, message, action = 'message')
   update = {
@@ -45,6 +46,7 @@ class TelegramControllerSpec < MiniTest::Test
   end
 
   def setup
+    MockClient.requests = []
     User.where(:_id.exists => 1).delete
     Category.where(:_id.exists => 1).delete
     Transaction.where(:_id.exists => 1).delete
@@ -65,18 +67,28 @@ class TelegramControllerSpec < MiniTest::Test
   end
 
   def test_chat_init
+    uid = rand(1000)
+    mid = rand(1000)
+    cid = rand(1000000000000000).to_s
+
     post "/webhook/#{ENV['TELEGRAM_SECRET']}", update_generator({
-      'id' => 1,
+      'id' => uid,
       'username' => 'mkundera',
       'first_name' => 'Milan',
       'last_name' => 'Kundera',
     }, {
-      'id' => 1,
-      'chat_id' => 1,
+      'id' => mid,
+      'chat_id' => cid,
       'text' => '/start',
     })
 
+    assert User.where(_id: uid).exists?
     assert_equal 200, last_response.status
+    assert_equal 1, MockClient.requests.length
+    assert_equal ({
+      chat_id: cid,
+      text: "welcome"
+    }).to_json, MockClient.requests[0][:payload]
   end
 
   def test_create_user

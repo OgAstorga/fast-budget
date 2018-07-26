@@ -1,5 +1,6 @@
 require_relative './app'
 require_relative '../models/main.rb'
+require_relative '../helpers/bot-api'
 
 class TelegramController < AppController
   before do
