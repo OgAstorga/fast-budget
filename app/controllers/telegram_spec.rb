@@ -88,7 +88,7 @@ class TelegramControllerSpec < MiniTest::Test
       'last_name' => 'Kundera',
     }, {
       'id' => 1,
-      'chat_id' => 1,
+      'chat_id' => '1',
       'text' => '/start',
     })
 
@@ -105,7 +105,7 @@ class TelegramControllerSpec < MiniTest::Test
       'last_name' => 'Kundera',
     }, {
       'id' => mid,
-      'chat_id' => cid,
+      'chat_id' => cid.to_s,
       'text' => '147 machine learning',
     })
 
@@ -114,7 +114,7 @@ class TelegramControllerSpec < MiniTest::Test
     assert transaction != nil
     assert_equal 1, transaction[:user_id]
     assert_equal mid, transaction[:message_id]
-    assert_equal cid, transaction[:chat_id]
+    assert_equal cid.to_s, transaction[:chat_id]
     assert_equal 147.0, transaction[:amount]
     assert_equal 'machine learning', transaction[:description]
   end
@@ -191,7 +191,7 @@ class TelegramControllerSpec < MiniTest::Test
 
     assert_equal 1, transactions.length
     assert_equal mid, transactions[0].message_id
-    assert_equal cid, transactions[0].chat_id
+    assert_equal cid.to_s, transactions[0].chat_id
   end
 
   def test_set_budget

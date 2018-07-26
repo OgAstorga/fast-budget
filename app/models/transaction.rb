@@ -3,7 +3,7 @@ require 'mongoid'
 class Transaction
   include Mongoid::Document
 
-  field :chat_id, type: Integer
+  field :chat_id, type: String
   field :message_id, type: Integer
   field :message, type: String
   field :timestamp, type: DateTime
