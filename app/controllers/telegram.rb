@@ -17,19 +17,52 @@ class TelegramController < AppController
     end
   end
 
-  def self.handle_message(message, edit=false)
-    from = message['from']
-
+  def get_user(from)
     if not User.where(_id: from['id']).exists?
       User.create(
         _id: from['id'],
         username: from['username'],
         first_name: from['first_name'],
         last_name: from['last_name'],
+        budget: 0,
       )
     end
 
     user = User.find(from['id'])
+  end
+
+  def command_start(message)
+    get_user message['from']
+
+    BotApi.send_message chat_id: message['chat']['id'], text: 'welcome'
+  end
+
+  def command_budget(message)
+    user = get_user message['from']
+
+    tokens = message['text'].split
+
+    budget = nil
+
+    tokens.each do |token|
+      if budget == nil and /^((\d+(\.\d+)?)|((\d+)?\.\d+))$/.match(token)
+        budget = token.to_f
+      end
+    end
+
+    if budget == nil
+      BotApi.send_message chat_id: message['chat']['id'], text: 'I don\'t get it'
+    else
+      user.update_attributes(
+        budget: budget,
+      )
+
+      BotApi.send_message chat_id: message['chat']['id'], text: 'budget set!'
+    end
+  end
+
+  def command_transaction(message)
+    user = get_user message['from']
 
     tokens = message['text'].split
 
@@ -42,6 +75,8 @@ class TelegramController < AppController
         amount = token.to_f
       elsif /^#[a-zA-Z0-9_]+$/.match(token)
         categories << token
+      elsif /^\/transaction$/.match(token)
+        # ignore command
       else
         description << token
       end
@@ -53,7 +88,12 @@ class TelegramController < AppController
       Category.find_or_create_by(slug: slug)
     end
 
-    if edit
+    is_edit = Transaction.where(
+      chat_id: message['chat']['id'],
+      message_id: message['message_id'],
+    ).exists?
+
+    if is_edit
       transaction = Transaction.find_by(
         chat_id: message['chat']['id'],
         message_id: message['message_id']
@@ -94,9 +134,30 @@ class TelegramController < AppController
     end
 
     if @body_hash.has_key?('message')
-      self.class.handle_message @body_hash['message']
+      message =  @body_hash['message']
     elsif @body_hash.has_key?('edited_message')
-      self.class.handle_message @body_hash['edited_message'], true
+      message = @body_hash['edited_message']
+    else
+      # I don't understand the update
+      halt 200
+    end
+
+
+    tokens = message['text'].split
+    fword = tokens[0]
+    case fword
+    when '/start'
+      # Create user & explain how to use this bot
+      command_start(message)
+    when '/budget'
+      # Set user budget
+      command_budget(message)
+    when '/transaction'
+      # Create a new transaction
+      command_transaction(message)
+    else
+      # Create a new transaction
+      command_transaction(message)
     end
 
     [200, 'grant']

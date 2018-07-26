@@ -193,4 +193,23 @@ class TelegramControllerSpec < MiniTest::Test
     assert_equal mid, transactions[0].message_id
     assert_equal cid, transactions[0].chat_id
   end
+
+  def test_set_budget
+    mid = rand(1000)
+    cid = rand(1000)
+
+    post "/webhook/#{ENV['TELEGRAM_SECRET']}", update_generator({
+      'id' => 1,
+      'username' => 'mkundera',
+      'first_name' => 'Milan',
+      'last_name' => 'Kundera',
+    }, {
+      'id' => mid,
+      'chat_id' => cid,
+      'text' => '/budget 80000',
+    })
+
+    user = User.find(1)
+    assert_equal 80000, user.budget
+  end
 end
