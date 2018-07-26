@@ -3,7 +3,7 @@ require 'rack/test'
 
 require_relative './mock-client'
 
-class TelegramControllerSpec < MiniTest::Test
+class MockClientSpec < MiniTest::Test
   include Rack::Test::Methods
 
   def setup

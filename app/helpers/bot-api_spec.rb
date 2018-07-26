@@ -4,7 +4,7 @@ require 'rack/test'
 require_relative './mock-client'
 require_relative './bot-api'
 
-class TelegramControllerSpec < MiniTest::Test
+class BotApiSpec < MiniTest::Test
   include Rack::Test::Methods
 
   def setup
