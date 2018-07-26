@@ -42,10 +42,15 @@ class BotApi
       if ENV['RACK_ENV'] == 'test'
         MockClient.post uri, payload, headers
       else
+        puts ""
+        puts uri
+        puts payload
         begin
           RestClient.post uri, payload, headers
         rescue RestClient::ExceptionWithResponse => err
           # @TODO Log failed request
+          puts "failed"
+          puts err
         end
       end
     end
