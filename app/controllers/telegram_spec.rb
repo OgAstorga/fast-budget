@@ -38,6 +38,19 @@ def update_generator(user, message, action = 'message')
   update.to_json
 end
 
+def simple_update_generator(message, message_id = 1, chat_id = 1, user_id = 1)
+  update_generator({
+    'id' => user_id,
+    'username' => 'mkundera',
+    'first_name' => 'Milan',
+    'last_name' => 'Kundera',
+  }, {
+    'id' => message_id,
+    'chat_id' => chat_id,
+    'text' => message,
+  })
+end
+
 class TelegramControllerSpec < MiniTest::Test
   include Rack::Test::Methods
 
@@ -223,5 +236,18 @@ class TelegramControllerSpec < MiniTest::Test
 
     user = User.find(1)
     assert_equal 80000, user.budget
+  end
+
+  def test_stats
+    post "/webhook/#{ENV['TELEGRAM_SECRET']}", simple_update_generator('10 #a', 1, 1)
+    post "/webhook/#{ENV['TELEGRAM_SECRET']}", simple_update_generator('20 #b', 2, 2)
+    post "/webhook/#{ENV['TELEGRAM_SECRET']}", simple_update_generator('40 #a', 3, 3)
+
+    MockClient.requests = []
+    post "/webhook/#{ENV['TELEGRAM_SECRET']}", simple_update_generator('/stats', 4, 4)
+    assert_equal 1, MockClient::requests.length
+
+    payload = JSON.parse MockClient::requests[0][:payload]
+    assert_equal '#a 50.00\n#b 20.00', payload['text']
   end
 end
