@@ -125,6 +125,33 @@ class TelegramController < AppController
     end
   end
 
+  def command_stats(message)
+    user = get_user message['from']
+
+    transactions = Transaction.where(
+      user: user
+    )
+
+    category_hash = {}
+    transactions.each do |transaction|
+      transaction.categories.each do |category|
+        slug = category.slug
+        if not category_hash.has_key?(slug)
+          category_hash[slug] = 0
+        end
+
+        category_hash[slug] += transaction.amount
+      end
+    end
+
+    tokens = []
+    category_hash.keys.each do |key|
+      tokens.push('#%s %.2f' % [key, category_hash[key]])
+    end
+
+    BotApi.send_message chat_id: message['chat']['id'], text: tokens.join('\n')
+  end
+
   post '/webhook/:secret' do
     if params[:secret] != ENV['TELEGRAM_SECRET']
       halt 401
@@ -153,6 +180,8 @@ class TelegramController < AppController
     when '/budget'
       # Set user budget
       command_budget(message)
+    when '/stats'
+      command_stats(message)
     when '/transaction'
       # Create a new transaction
       command_transaction(message)
