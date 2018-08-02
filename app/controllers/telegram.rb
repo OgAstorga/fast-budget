@@ -149,7 +149,7 @@ class TelegramController < AppController
       tokens.push('#%s %.2f' % [key, category_hash[key]])
     end
 
-    BotApi.send_message chat_id: message['chat']['id'], text: tokens.join('\n')
+    BotApi.send_message chat_id: message['chat']['id'], text: tokens.join("\n")
   end
 
   post '/webhook/:secret' do

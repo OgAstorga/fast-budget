@@ -248,6 +248,6 @@ class TelegramControllerSpec < MiniTest::Test
     assert_equal 1, MockClient::requests.length
 
     payload = JSON.parse MockClient::requests[0][:payload]
-    assert_equal '#a 50.00\n#b 20.00', payload['text']
+    assert_equal "#a 50.00\n#b 20.00", payload['text']
   end
 end
