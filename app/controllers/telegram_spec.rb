@@ -66,7 +66,7 @@ class TelegramControllerSpec < MiniTest::Test
   end
 
   def test_webhook_auth
-    post '/webhook/r8O3JnU3O91uegYj', '{"update_id": 1}'
+    post "/webhook/r8O3JnU3O91uegYj", '{"update_id": 1}'
     assert_equal 401, last_response.status
 
     post "/webhook/#{ENV['TELEGRAM_SECRET']}", '{"update_id": 1}'
@@ -100,7 +100,7 @@ class TelegramControllerSpec < MiniTest::Test
     assert_equal 1, MockClient.requests.length
     assert_equal ({
       chat_id: cid,
-      text: "welcome"
+      text: 'welcome'
     }).to_json, MockClient.requests[0][:payload]
   end
 
