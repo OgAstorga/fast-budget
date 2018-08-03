@@ -25,7 +25,7 @@ def update_generator(text, message_id = 1, chat_id = 1, user_id = 1, action = 'm
         'username' => 'mkundera',
         'type' => 'private',
       },
-      'date' => Time.now.to_i,
+      'date' => date,
       'text' => text,
       'entities' => [{
         'offset' => 0,
@@ -154,15 +154,23 @@ class TelegramControllerSpec < MiniTest::Test
   end
 
   def test_stats
-    post "/webhook/#{ENV['TELEGRAM_SECRET']}", update_generator('10 #a', 1, 1)
-    post "/webhook/#{ENV['TELEGRAM_SECRET']}", update_generator('20 #b', 2, 2)
-    post "/webhook/#{ENV['TELEGRAM_SECRET']}", update_generator('40 #a', 3, 3)
+    now = Time.now
+    year = now.year
+    month = now.strftime("%m").to_i
+    last_month = Time.new(year, month - 1)
+
+    post "/webhook/#{ENV['TELEGRAM_SECRET']}", update_generator('10 #a', 1, 1, 1, 'message', last_month.to_i)
+    post "/webhook/#{ENV['TELEGRAM_SECRET']}", update_generator('10 #a', 2)
+    post "/webhook/#{ENV['TELEGRAM_SECRET']}", update_generator('20 #b', 3)
+    post "/webhook/#{ENV['TELEGRAM_SECRET']}", update_generator('40 #a', 4)
 
     MockClient.requests = []
-    post "/webhook/#{ENV['TELEGRAM_SECRET']}", update_generator('/stats', 4, 4)
+    post "/webhook/#{ENV['TELEGRAM_SECRET']}", update_generator('/stats', 5)
     assert_equal 1, MockClient::requests.length
 
     payload = JSON.parse MockClient::requests[0][:payload]
-    assert_equal "#a 50.00\n#b 20.00", payload['text']
+
+    title = now.strftime("%B %Y")
+    assert_equal "%s\n\n#a 50.00\n#b 20.00" % [title], payload['text']
   end
 end

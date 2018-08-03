@@ -126,10 +126,14 @@ class TelegramController < AppController
   end
 
   def command_stats(message)
+    now = Time.now
+    start = Time.new(now.year, now.month)
+
     user = get_user message['from']
 
     transactions = Transaction.where(
-      user: user
+      :user => user,
+      :timestamp.gte => start
     )
 
     category_hash = {}
@@ -145,6 +149,10 @@ class TelegramController < AppController
     end
 
     tokens = []
+
+    tokens.push Time.now.strftime('%B %Y')
+    tokens.push ''
+
     category_hash.keys.each do |key|
       tokens.push('#%s %.2f' % [key, category_hash[key]])
     end
