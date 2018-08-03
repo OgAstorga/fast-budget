@@ -5,50 +5,37 @@ require_relative './telegram.rb'
 require_relative '../models/main.rb'
 require_relative '../helpers/mock-client'
 
-def update_generator(user, message, action = 'message')
+def update_generator(text, message_id = 1, chat_id = 1, user_id = 1, action = 'message', date = Time.now.to_i, update_id = 1)
   update = {
-    'update_id' => 1,
+    'update_id' => update_id,
     action => {
-      'message_id' => message['id'],
+      'message_id' => message_id,
       'from' => {
-        'id' => user['id'],
+        'id' => user_id,
         'is_bot' => false,
-        'first_name' => user['first_name'],
-        'last_name' => user['last_name'],
-        'username' => user['username'],
+        'first_name' => 'mkundera',
+        'last_name' => 'Milan',
+        'username' => 'Kundera',
         'language_code' => 'en-us',
       },
       'chat' => {
-        'id' => message['chat_id'],
-        'first_name' => user['first_name'],
-        'last_name' => user['last_name'],
-        'username' => user['username'],
+        'id' => chat_id,
+        'first_name' => 'Milan',
+        'last_name' => 'Kundera',
+        'username' => 'mkundera',
         'type' => 'private',
       },
       'date' => Time.now.to_i,
-      'text' => message['text'],
+      'text' => text,
       'entities' => [{
         'offset' => 0,
-        'length' => message['text'].length,
+        'length' => text.length,
         'type' => 'bot_command',
       }],
     },
   }
 
   update.to_json
-end
-
-def simple_update_generator(message, message_id = 1, chat_id = 1, user_id = 1)
-  update_generator({
-    'id' => user_id,
-    'username' => 'mkundera',
-    'first_name' => 'Milan',
-    'last_name' => 'Kundera',
-  }, {
-    'id' => message_id,
-    'chat_id' => chat_id,
-    'text' => message,
-  })
 end
 
 class TelegramControllerSpec < MiniTest::Test
@@ -80,20 +67,11 @@ class TelegramControllerSpec < MiniTest::Test
   end
 
   def test_chat_init
-    uid = rand(1000)
     mid = rand(1000)
     cid = rand(1000000000000000).to_s
+    uid = rand(1000)
 
-    post "/webhook/#{ENV['TELEGRAM_SECRET']}", update_generator({
-      'id' => uid,
-      'username' => 'mkundera',
-      'first_name' => 'Milan',
-      'last_name' => 'Kundera',
-    }, {
-      'id' => mid,
-      'chat_id' => cid,
-      'text' => '/start',
-    })
+    post "/webhook/#{ENV['TELEGRAM_SECRET']}", update_generator('/start', mid, cid, uid)
 
     assert User.where(_id: uid).exists?
     assert_equal 200, last_response.status
@@ -106,16 +84,7 @@ class TelegramControllerSpec < MiniTest::Test
 
   def test_create_user
     uid = rand(1000)
-    post "/webhook/#{ENV['TELEGRAM_SECRET']}", update_generator({
-      'id' => uid,
-      'username' => 'mkundera',
-      'first_name' => 'Milan',
-      'last_name' => 'Kundera',
-    }, {
-      'id' => 1,
-      'chat_id' => '1',
-      'text' => '/start',
-    })
+    post "/webhook/#{ENV['TELEGRAM_SECRET']}", update_generator('/start', 1, 1, uid)
 
     assert User.where(_id: uid).exists?
   end
@@ -123,16 +92,7 @@ class TelegramControllerSpec < MiniTest::Test
   def test_log_spending
     mid = rand(1000)
     cid = rand(1000000000000000)
-    post "/webhook/#{ENV['TELEGRAM_SECRET']}", update_generator({
-      'id' => 1,
-      'username' => 'mkundera',
-      'first_name' => 'Milan',
-      'last_name' => 'Kundera',
-    }, {
-      'id' => mid,
-      'chat_id' => cid.to_s,
-      'text' => '147 machine learning',
-    })
+    post "/webhook/#{ENV['TELEGRAM_SECRET']}", update_generator('147 machine learning', mid, cid.to_s)
 
     transaction = Transaction.find_by(chat_id: cid, message_id: mid)
 
@@ -148,16 +108,7 @@ class TelegramControllerSpec < MiniTest::Test
     mid = rand(1000)
     cid = rand(1000)
 
-    post "/webhook/#{ENV['TELEGRAM_SECRET']}", update_generator({
-      'id' => 1,
-      'username' => 'mkundera',
-      'first_name' => 'Milan',
-      'last_name' => 'Kundera',
-    }, {
-      'id' => mid,
-      'chat_id' => cid,
-      'text' => '147 machine learning',
-    })
+    post "/webhook/#{ENV['TELEGRAM_SECRET']}", update_generator('147 machine learning', mid, cid)
 
     transaction = Transaction.find_by(chat_id: cid, message_id: mid)
 
@@ -165,16 +116,7 @@ class TelegramControllerSpec < MiniTest::Test
     assert_equal 'machine learning', transaction[:description]
 
 
-    post "/webhook/#{ENV['TELEGRAM_SECRET']}", update_generator({
-      'id' => 1,
-      'username' => 'mkundera',
-      'first_name' => 'Milan',
-      'last_name' => 'Kundera',
-    }, {
-      'id' => mid,
-      'chat_id' => cid,
-      'text' => '13.5 cookies',
-    }, 'edited_message')
+    post "/webhook/#{ENV['TELEGRAM_SECRET']}", update_generator('13.5 cookies', mid, cid, 1, 'edited_message')
 
     transaction = Transaction.find_by(chat_id: cid, message_id: mid)
 
@@ -182,16 +124,7 @@ class TelegramControllerSpec < MiniTest::Test
     assert_equal 'cookies', transaction[:description]
 
 
-    post "/webhook/#{ENV['TELEGRAM_SECRET']}", update_generator({
-      'id' => 1,
-      'username' => 'mkundera',
-      'first_name' => 'Milan',
-      'last_name' => 'Kundera',
-    }, {
-      'id' => mid,
-      'chat_id' => cid,
-      'text' => 'no transaction',
-    }, 'edited_message')
+    post "/webhook/#{ENV['TELEGRAM_SECRET']}", update_generator('no transaction', mid, cid, 1, 'edited_message')
 
     assert Transaction.where(chat_id: cid, message_id: mid).exists? == false
   end
@@ -200,16 +133,7 @@ class TelegramControllerSpec < MiniTest::Test
     mid = rand(1000)
     cid = rand(1000)
 
-    post "/webhook/#{ENV['TELEGRAM_SECRET']}", update_generator({
-      'id' => 1,
-      'username' => 'mkundera',
-      'first_name' => 'Milan',
-      'last_name' => 'Kundera',
-    }, {
-      'id' => mid,
-      'chat_id' => cid,
-      'text' => '147 machine learning #education',
-    })
+    post "/webhook/#{ENV['TELEGRAM_SECRET']}", update_generator('147 machine learning #education', mid, cid)
 
     category = Category.find_by(slug: 'education')
     transactions = category.transactions
@@ -223,28 +147,19 @@ class TelegramControllerSpec < MiniTest::Test
     mid = rand(1000)
     cid = rand(1000)
 
-    post "/webhook/#{ENV['TELEGRAM_SECRET']}", update_generator({
-      'id' => 1,
-      'username' => 'mkundera',
-      'first_name' => 'Milan',
-      'last_name' => 'Kundera',
-    }, {
-      'id' => mid,
-      'chat_id' => cid,
-      'text' => '/budget 80000',
-    })
+    post "/webhook/#{ENV['TELEGRAM_SECRET']}", update_generator('/budget 80000', mid, cid)
 
     user = User.find(1)
     assert_equal 80000, user.budget
   end
 
   def test_stats
-    post "/webhook/#{ENV['TELEGRAM_SECRET']}", simple_update_generator('10 #a', 1, 1)
-    post "/webhook/#{ENV['TELEGRAM_SECRET']}", simple_update_generator('20 #b', 2, 2)
-    post "/webhook/#{ENV['TELEGRAM_SECRET']}", simple_update_generator('40 #a', 3, 3)
+    post "/webhook/#{ENV['TELEGRAM_SECRET']}", update_generator('10 #a', 1, 1)
+    post "/webhook/#{ENV['TELEGRAM_SECRET']}", update_generator('20 #b', 2, 2)
+    post "/webhook/#{ENV['TELEGRAM_SECRET']}", update_generator('40 #a', 3, 3)
 
     MockClient.requests = []
-    post "/webhook/#{ENV['TELEGRAM_SECRET']}", simple_update_generator('/stats', 4, 4)
+    post "/webhook/#{ENV['TELEGRAM_SECRET']}", update_generator('/stats', 4, 4)
     assert_equal 1, MockClient::requests.length
 
     payload = JSON.parse MockClient::requests[0][:payload]
