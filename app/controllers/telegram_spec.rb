@@ -183,4 +183,43 @@ class TelegramControllerSpec < MiniTest::Test
     title = now.strftime("%B %Y")
     assert_equal "%s\n\n#a 50.00\n#b 20.00" % [title], payload['text']
   end
+
+  def test_category_query
+    post "/webhook/#{ENV['TELEGRAM_SECRET']}", update_generator("Philosopher's Stone 59 #books", 1)
+    post "/webhook/#{ENV['TELEGRAM_SECRET']}", update_generator("Chamber of Secrets 59 #books", 2)
+    post "/webhook/#{ENV['TELEGRAM_SECRET']}", update_generator("Prisoner of Azkaban 59 #books", 3)
+    post "/webhook/#{ENV['TELEGRAM_SECRET']}", update_generator("Goblet of Fire 59 #books", 4)
+    post "/webhook/#{ENV['TELEGRAM_SECRET']}", update_generator("Order of the Phoenix 59 #books", 5)
+    post "/webhook/#{ENV['TELEGRAM_SECRET']}", update_generator("Half-Blood Prince 59 #books", 6)
+    post "/webhook/#{ENV['TELEGRAM_SECRET']}", update_generator("Deathly Hallows 59 #books", 7)
+    post "/webhook/#{ENV['TELEGRAM_SECRET']}", update_generator("The Matrix 75 #movies", 8)
+    post "/webhook/#{ENV['TELEGRAM_SECRET']}", update_generator("The Matrix Reloaded 75 #movies", 9)
+    post "/webhook/#{ENV['TELEGRAM_SECRET']}", update_generator("The Matrix Revolutions 75 #movies", 10)
+
+    MockClient::requests = []
+    post "/webhook/#{ENV['TELEGRAM_SECRET']}", update_generator('#books', 11)
+
+    expected = []
+
+    # Build title
+    expected << Time.now.strftime("#books %B %Y")
+    expected << ""
+
+    # Build body
+    total = 0
+    books = Category.find_by(slug: 'books')
+    books.transactions.each do |transaction|
+      expected << transaction.to_s
+      total += transaction.amount
+    end
+    expected << ""
+
+    # Build footer
+    expected << "%.2f in total" % total.to_s
+
+    assert_equal 1, MockClient::requests.length
+
+    payload = JSON.parse MockClient::requests[0][:payload]
+    assert_equal expected, payload['text']
+  end
 end
