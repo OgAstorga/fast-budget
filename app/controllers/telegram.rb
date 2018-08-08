@@ -131,6 +131,37 @@ class TelegramController < AppController
     end
   end
 
+  def command_category(message)
+    now = Time.now
+    start = Time.new(now.year, now.month)
+
+    user = get_user message['from']
+
+    text = message['text']
+    slug = text[1, text.length-1]
+    category = Category.find_by(slug: slug)
+
+    # Build title
+    tokens = []
+    tokens.push start.strftime('#books %B %Y')
+    tokens.push ''
+
+    # Build body
+    total = 0
+    books = Category.find_by(slug: 'books')
+    books.transactions.each do |transaction|
+      tokens.push transaction.to_s
+      total += transaction.amount
+    end
+    tokens.push ''
+
+    # Build footer
+    tokens.push '%.2f in total' % total.to_s
+
+    puts category
+    BotApi.send_message chat_id: message['chat']['id'], text: tokens.join("\n")
+  end
+
   def command_stats(message)
     now = Time.now
     start = Time.new(now.year, now.month)
@@ -187,18 +218,20 @@ class TelegramController < AppController
 
     tokens = message['text'].split
     fword = tokens[0]
-    case fword
-    when '/start'
+    if fword == '/start'
       # Create user & explain how to use this bot
       command_start(message)
-    when '/budget'
+    elsif fword == '/budget'
       # Set user budget
       command_budget(message)
-    when '/stats'
+    elsif fword == '/stats'
       command_stats(message)
-    when '/transaction'
+    elsif fword == '/transaction'
       # Create a new transaction
       command_transaction(message)
+    elsif fword[0] == '#' && tokens.length == 1
+      # Category query
+      command_category(message)
     else
       # Create a new transaction
       command_transaction(message)
