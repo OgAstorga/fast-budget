@@ -67,6 +67,7 @@ class TelegramController < AppController
 
     tokens = message['text'].split
 
+    timestamps = []
     categories = []
     description = []
     amount = nil
@@ -74,6 +75,8 @@ class TelegramController < AppController
     tokens.each do |token|
       if amount == nil and /^((\d+(\.\d+)?)|((\d+)?\.\d+))$/.match(token)
         amount = token.to_f
+      elsif /^~\d{4}-\d{2}-\d{2}+$/.match(token)
+        timestamps << DateTime.parse(token[1, token.length-1])
       elsif /^#[a-zA-Z0-9_]+$/.match(token)
         categories << token
       elsif /^\/transaction$/.match(token)
@@ -88,6 +91,9 @@ class TelegramController < AppController
       slug = category[1, category.length-1].downcase
       Category.find_or_create_by(slug: slug)
     end
+
+    # Get timestamp
+    timestamp = (timestamps.length > 0) ? timestamps[0] : Time.at(message['date'])
 
     is_edit = Transaction.where(
       chat_id: message['chat']['id'],
@@ -105,7 +111,7 @@ class TelegramController < AppController
       else
         transaction.update_attributes(
           message: message['text'],
-          timestamp: Time.at(message['date']),
+          timestamp: timestamp,
           amount: amount,
           description: description.join(' '),
           categories: categories,
@@ -116,7 +122,7 @@ class TelegramController < AppController
         chat_id: message['chat']['id'],
         message_id: message['message_id'],
         message: message['text'],
-        timestamp: Time.at(message['date']),
+        timestamp: timestamp,
         amount: amount,
         description: description.join(' '),
         user: user,

@@ -143,6 +143,16 @@ class TelegramControllerSpec < MiniTest::Test
     assert_equal cid.to_s, transactions[0].chat_id
   end
 
+  def test_transaction_date
+    post "/webhook/#{ENV['TELEGRAM_SECRET']}", update_generator('147 #education ~2018-01-01')
+    transaction = Transaction.find_by(chat_id: 1, message_id: 1)
+    assert_equal DateTime.new(2018, 1, 1), transaction.timestamp
+
+    post "/webhook/#{ENV['TELEGRAM_SECRET']}", update_generator('147 #education ~2018-05-01', 1, 1, 1, 'edited_message')
+    transaction = Transaction.find_by(chat_id: 1, message_id: 1)
+    assert_equal DateTime.new(2018, 5, 1), transaction.timestamp
+  end
+
   def test_set_budget
     mid = rand(1000)
     cid = rand(1000)
