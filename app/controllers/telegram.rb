@@ -1,6 +1,7 @@
 require_relative './app'
 require_relative '../models/main.rb'
 require_relative '../helpers/bot-api'
+require_relative '../helpers/utils'
 
 class TelegramController < AppController
   before do
@@ -156,9 +157,8 @@ class TelegramController < AppController
     tokens.push ''
 
     # Build footer
-    tokens.push '%.2f in total' % total.to_s
+    tokens.push '%s in total' % format_number(total)
 
-    puts category
     BotApi.send_message chat_id: message['chat']['id'], text: tokens.join("\n")
   end
 
@@ -173,6 +173,7 @@ class TelegramController < AppController
       :timestamp.gte => start
     )
 
+    total = 0.0
     category_hash = {}
     transactions.each do |transaction|
       transaction.categories.each do |category|
@@ -181,6 +182,7 @@ class TelegramController < AppController
           category_hash[slug] = 0
         end
 
+        total += transaction.amount
         category_hash[slug] += transaction.amount
       end
     end
@@ -191,8 +193,11 @@ class TelegramController < AppController
     tokens.push ''
 
     category_hash.keys.each do |key|
-      tokens.push('#%s %.2f' % [key, category_hash[key]])
+      tokens.push('#%s %s' % [key, format_number(category_hash[key])])
     end
+
+    tokens.push ''
+    tokens.push 'total %s' % format_number(total)
 
     BotApi.send_message chat_id: message['chat']['id'], text: tokens.join("\n")
   end

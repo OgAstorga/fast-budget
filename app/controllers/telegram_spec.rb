@@ -171,7 +171,7 @@ class TelegramControllerSpec < MiniTest::Test
 
     post "/webhook/#{ENV['TELEGRAM_SECRET']}", update_generator('10 #a', 1, 1, 1, 'message', last_month.to_i)
     post "/webhook/#{ENV['TELEGRAM_SECRET']}", update_generator('10 #a', 2)
-    post "/webhook/#{ENV['TELEGRAM_SECRET']}", update_generator('20 #b', 3)
+    post "/webhook/#{ENV['TELEGRAM_SECRET']}", update_generator('1000 #b', 3)
     post "/webhook/#{ENV['TELEGRAM_SECRET']}", update_generator('40 #a', 4)
 
     MockClient.requests = []
@@ -181,7 +181,7 @@ class TelegramControllerSpec < MiniTest::Test
     payload = JSON.parse MockClient::requests[0][:payload]
 
     title = now.strftime("%B %Y")
-    assert_equal "%s\n\n#a 50.00\n#b 20.00" % [title], payload['text']
+    assert_equal "%s\n\n#a 50.00\n#b 1,000.00\n\ntotal 1,050.00" % [title], payload['text']
   end
 
   def test_category_query
