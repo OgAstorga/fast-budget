@@ -176,13 +176,14 @@ class TelegramController < AppController
     total = 0.0
     category_hash = {}
     transactions.each do |transaction|
+      total += transaction.amount
+
       transaction.categories.each do |category|
         slug = category.slug
         if not category_hash.has_key?(slug)
           category_hash[slug] = 0
         end
 
-        total += transaction.amount
         category_hash[slug] += transaction.amount
       end
     end
